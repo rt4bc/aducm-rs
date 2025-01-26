@@ -1,10 +1,11 @@
 """
 makecrates.py
 Copyright 2017-2019 Adam Greig
+Copyright 2025- RT4BC
 Licensed under the MIT and Apache 2.0 licenses.
 
 Autogenerate the crate Cargo.toml, build.rs, README.md and src/lib.rs files
-based on available YAML files for each STM32 family.
+based on available YAML files for each ADuCM family.
 
 Usage: python3 scripts/makecrates.py devices/
 """
@@ -16,65 +17,27 @@ import argparse
 import re
 import yaml
 
-VERSION = "0.15.1"
+VERSION = "0.1.0"
 SVD2RUST_VERSION = "0.35.0"
 
 CRATE_DOC_FEATURES = {
-    "stm32c0": ["atomics", "critical-section", "defmt", "rt", "stm32c011", "stm32c031", "stm32c071"],
-    "stm32f0": ["atomics", "critical-section", "defmt", "rt", "stm32f0x0", "stm32f0x1", "stm32f0x2", "stm32f0x8"],
-    "stm32f1": ["atomics", "critical-section", "defmt", "rt", "stm32f100", "stm32f101", "stm32f102", "stm32f103", "stm32f107"],
-    "stm32f2": ["atomics", "critical-section", "defmt", "rt", "stm32f215", "stm32f217"],
-    "stm32f3": ["atomics", "critical-section", "defmt", "rt", "stm32f302", "stm32f303", "stm32f373"],
-    "stm32f4": ["atomics", "critical-section", "defmt", "rt", "stm32f401", "stm32f407", "stm32f413", "stm32f469"],
-    "stm32f7": ["atomics", "critical-section", "defmt", "rt", "stm32f733", "stm32f779"],
-    "stm32h5": ["atomics", "critical-section", "defmt", "rt", "stm32h503", "stm32h533", "stm32h562", "stm32h573"],
-    "stm32h7": ["atomics", "critical-section", "defmt", "rt", "stm32h735", "stm32h750", "stm32h753", "stm32h753v", "stm32h757cm7", "stm32h7b3"],
-    "stm32l0": ["atomics", "critical-section", "defmt", "rt", "stm32l0x0", "stm32l0x1", "stm32l0x2", "stm32l0x3"],
-    "stm32l1": ["atomics", "critical-section", "defmt", "rt", "stm32l100", "stm32l151", "stm32l162"],
-    "stm32l4": ["atomics", "critical-section", "defmt", "rt", "stm32l4x1", "stm32l4x5"],
-    "stm32l5": ["atomics", "critical-section", "defmt", "rt", "stm32l562"],
-    "stm32g0": ["atomics", "critical-section", "defmt", "rt", "stm32g030", "stm32g070", "stm32g0b0", "stm32g041", "stm32g081", "stm32g0c1"],
-    "stm32g4": ["atomics", "critical-section", "defmt", "rt", "stm32g431", "stm32g441", "stm32g474", "stm32g484"],
-    "stm32mp1": ["atomics", "critical-section", "defmt", "rt", "stm32mp157"],
-    "stm32u0": ["atomics", "critical-section", "defmt", "rt", "stm32u031", "stm32u083"],
-    "stm32u5": ["atomics", "critical-section", "defmt", "rt", "stm32u535", "stm32u545", "stm32u575", "stm32u585", "stm32u595", "stm32u5a5", "stm32u599", "stm32u5a9"],
-    "stm32wl": ["atomics", "critical-section", "defmt", "rt", "stm32wle5", "stm32wl5x_cm4"],
-    "stm32wb": ["atomics", "critical-section", "defmt", "rt", "stm32wb55"]
+    "aducm410": ["atomics", "critical-section", "defmt", "rt", "aducm410"]
 }
 
 CRATE_DOC_TARGETS = {
-    "stm32c0": "thumbv6m-none-eabi",
-    "stm32f0": "thumbv6m-none-eabi",
-    "stm32f1": "thumbv7m-none-eabi",
-    "stm32f2": "thumbv7m-none-eabi",
-    "stm32f3": "thumbv7em-none-eabihf",
-    "stm32f4": "thumbv7em-none-eabihf",
-    "stm32f7": "thumbv7em-none-eabihf",
-    "stm32h5": "thumbv8m.main-none-eabihf",
-    "stm32h7": "thumbv7em-none-eabihf",
-    "stm32l0": "thumbv6m-none-eabi",
-    "stm32l1": "thumbv7m-none-eabi",
-    "stm32l4": "thumbv7em-none-eabihf",
-    "stm32l5": "thumbv8m.main-none-eabi",
-    "stm32g0": "thumbv6m-none-eabi",
-    "stm32g4": "thumbv7em-none-eabihf",
-    "stm32mp1": "thumbv7em-none-eabihf",
-    "stm32u0": "thumbv6m-none-eabi",
-    "stm32u5": "thumbv8m.main-none-eabi",
-    "stm32wl": "thumbv7em-none-eabi",
-    "stm32wb": "thumbv7em-none-eabihf"
+    "aducm410": "thumbv7em-none-eabihf"
 }
 
 CARGO_TOML_TPL = """\
 [package]
-edition = "2021"
+edition = "2025"
 name = "{crate}"
 version = "{version}"
-authors = ["Adam Greig <adam@adamgreig.com>", "stm32-rs Contributors"]
+authors = ["RT4BC <bochao.me@gmail.com>", "aducm-rs Contributors"]
 description = "Device support crates for {family} devices"
-repository = "https://github.com/stm32-rs/stm32-rs"
+repository = "https://github.com/rt4bc/aducm-rs"
 readme = "README.md"
-keywords = ["stm32", "svd2rust", "no_std", "embedded"]
+keywords = ["aducm", "svd2rust", "no_std", "embedded"]
 categories = ["embedded", "no-std"]
 license = "MIT/Apache-2.0"
 rust-version = "1.65"
@@ -108,7 +71,7 @@ SRC_LIB_RS_TPL = """\
 //! [svd2rust/#peripheral-api](https://docs.rs/svd2rust/{svd2rust_version}/svd2rust/#peripheral-api)
 //!
 //! For more details see the README here:
-//! [stm32-rs](https://github.com/stm32-rs/stm32-rs)
+//! [aducm-rs](https://github.com/rt4bc/aducm-rs)
 //!
 //! This crate supports all {family} devices; for the complete list please
 //! see:
@@ -116,7 +79,7 @@ SRC_LIB_RS_TPL = """\
 //!
 //! Due to doc build limitations, not all devices may be shown on docs.rs;
 //! a representative few have been selected instead. For a complete list of
-//! available registers and fields see: [stm32-rs Device Coverage](https://stm32-rs.github.io/stm32-rs/)
+//! available registers and fields see: [aducm-rs Device Coverage](https://github.com/rt4bc/aducm-rs)
 
 #![allow(non_camel_case_types)]
 #![allow(non_snake_case)]
@@ -137,7 +100,7 @@ extensive type-safe support. For more information please see the [main repo].
 Refer to the [documentation] for full details.
 
 [svd2rust]: https://github.com/rust-embedded/svd2rust
-[main repo]: https://github.com/stm32-rs/stm32-rs
+[main repo]: https://github.com/rt4bc/aducm-rs
 [documentation]: https://docs.rs/{crate}/latest/{crate}/
 
 ## Usage
@@ -205,7 +168,7 @@ fn main() {{
 def read_device_table():
     path = os.path.join(
         os.path.abspath(os.path.split(__file__)[0]), os.pardir,
-        "stm32_part_table.yaml")
+        "aducm_part_table.yaml")
     with open(path, encoding='utf-8') as f:
         table = yaml.safe_load(f)
     return table
@@ -239,11 +202,7 @@ def main(devices_path, yes, families):
 
     for path in glob.glob(os.path.join(devices_path, "*.yaml")):
         yamlfile = os.path.basename(path)
-        family = re.match(r'stm32[a-z]+[0-9]', yamlfile)[0]
-        if family.startswith('stm32wl'):
-            family = 'stm32wl'
-        if family.startswith('stm32wb'):
-            family = 'stm32wb'
+        family = re.match(r'aducm4[0-9]+', yamlfile)[0]
         device = os.path.splitext(yamlfile)[0].lower()
         if len(families) == 0 or family in families:
             if family not in devices:
