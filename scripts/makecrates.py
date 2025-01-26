@@ -30,7 +30,7 @@ CRATE_DOC_TARGETS = {
 
 CARGO_TOML_TPL = """\
 [package]
-edition = "2025"
+edition = "2021"
 name = "{crate}"
 version = "{version}"
 authors = ["RT4BC <bochao.me@gmail.com>", "aducm-rs Contributors"]
