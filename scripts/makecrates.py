@@ -25,7 +25,7 @@ CRATE_DOC_FEATURES = {
 }
 
 CRATE_DOC_TARGETS = {
-    "aducm410": "thumbv7em-none-eabihf"
+    "aducm410": "thumbv8m.main-none-eabihf"
 }
 
 CARGO_TOML_TPL = """\
